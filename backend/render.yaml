@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: tagihan-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: MONGO_URL
+        sync: false
+      - key: DB_NAME
+        value: tagihan_db
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: DIGIFLAZZ_USERNAME
+        value: hohupiD7qlVg
+      - key: DIGIFLAZZ_API_KEY
+        value: 9559bc70-2c6c-5921-9325-5dc369a00a12
