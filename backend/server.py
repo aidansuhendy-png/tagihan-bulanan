@@ -1,5 +1,6 @@
 import asyncio
 from fastapi import FastAPI, APIRouter
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 import os
@@ -18,6 +19,15 @@ from lib.db import client, db
 
 # Create the main app
 app = FastAPI()
+
+@app.middleware("http")
+async def catch_exceptions_middleware(request, call_next):
+    try:
+        return await call_next(request)
+    except Exception as exc:
+        import traceback
+        logger.error("Unhandled error: %s", traceback.format_exc())
+        return JSONResponse({"error": str(exc), "traceback": traceback.format_exc()}, status_code=500)
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
