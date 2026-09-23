@@ -1,5 +1,4 @@
 import asyncio
-from contextlib import asynccontextmanager
 from fastapi import FastAPI, APIRouter
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -11,28 +10,17 @@ from typing import List
 import uuid
 from datetime import datetime
 
-
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # MongoDB connection
-from lib.db import client, db, ensure_indexes
+from lib.db import client, db
 
-
-# Startup runs before the yield, shutdown after it. Add your own setup/teardown here.
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    app.state.index_task = asyncio.create_task(ensure_indexes())  # background: a big index build must not block boot
-    yield
-    client.close()
-
-
-# Create the main app without a prefix
-app = FastAPI(lifespan=lifespan)
+# Create the main app
+app = FastAPI()
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
-
 
 # Define Models
 class StatusCheck(BaseModel):
@@ -43,7 +31,7 @@ class StatusCheck(BaseModel):
 class StatusCheckCreate(BaseModel):
     client_name: str
 
-# Add your routes to the router instead of directly to app
+# Add your routes to the router
 @api_router.get("/")
 async def root():
     return {"message": "Hello World"}
@@ -70,7 +58,7 @@ app.include_router(api_router)
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=["*"] if os.environ.get('CORS_ORIGINS') == '*' else os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=["*"],
     allow_origin_regex=r"https?://.*",
     allow_methods=["*"],
     allow_headers=["*"],
