@@ -1,5 +1,5 @@
 import asyncio
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, Request
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from typing import List
 import uuid
 from datetime import datetime
+import traceback
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -21,13 +22,20 @@ from lib.db import client, db
 app = FastAPI()
 
 @app.middleware("http")
-async def catch_exceptions_middleware(request, call_next):
+async def catch_exceptions_middleware(request: Request, call_next):
     try:
         return await call_next(request)
     except Exception as exc:
-        import traceback
-        logger.error("Unhandled error: %s", traceback.format_exc())
-        return JSONResponse({"error": str(exc), "traceback": traceback.format_exc()}, status_code=500)
+        err_msg = traceback.format_exc()
+        logging.error("Exception caught by middleware: %s", err_msg)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": str(exc),
+                "type": str(type(exc)),
+                "traceback": err_msg
+            }
+        )
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
