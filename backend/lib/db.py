@@ -10,7 +10,7 @@ from pymongo import ASCENDING, DESCENDING, IndexModel
 
 load_dotenv(Path(__file__).parent.parent / ".env")
 
-DEFAULT_ATLAS_URL = "mongodb+srv://aidansuhendy6_db_user:1fP3ujtjgzClfGkO@cluster0.wc1r21g.mongodb.net/tagihan_db?retryWrites=true&w=majority"
+DEFAULT_ATLAS_URL = "mongodb+srv://aidansuhendy6_db_user:Aidan12345@cluster0.wc1r21g.mongodb.net/tagihan_db?retryWrites=true&w=majority"
 
 mongo_url = os.getenv("MONGO_URL") or DEFAULT_ATLAS_URL
 db_name = os.getenv("DB_NAME", "tagihan_db")
