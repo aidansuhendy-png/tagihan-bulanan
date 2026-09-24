@@ -111,11 +111,12 @@ export interface DueReminder {
   text: string;
   cls: string;
   urgent: boolean;
+  icon?: boolean;
 }
 
 export const dueReminder = (days: number): DueReminder | null => {
-  if (days < 0) return { text: `Terlambat ${Math.abs(days)} hari`, cls: "text-rose-500", urgent: true };
-  if (days === 0) return { text: "Jatuh tempo hari ini", cls: "text-rose-500", urgent: true };
-  if (days <= 3) return { text: `Tempo ${days} hari lagi`, cls: "text-amber-500", urgent: true };
+  if (days < 0) return { text: `${Math.abs(days)} Hari`, cls: "text-rose-500", urgent: true, icon: true };
+  if (days === 0) return { text: "0 Hari", cls: "text-amber-500", urgent: true, icon: true };
+  if (days <= 3) return { text: `${days} Hari`, cls: "text-amber-500", urgent: false, icon: false };
   return null;
 };

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { RefreshCw, CheckCircle2, Trash2, Loader2 } from "lucide-react";
+import { RefreshCw, CheckCircle2, Trash2, Loader2, AlertTriangle } from "lucide-react";
 import { apiPost, apiDelete, ApiError } from "@/lib/api";
 import { rupiah, dueReminder, type Bill, type InquiryResult, type PaymentResult } from "@/lib/types";
 import { skuStyle } from "@/lib/sku";
@@ -101,12 +101,13 @@ export default function BillRow({ bill }: { bill: Bill }) {
           {rupiah(bill.amount)}
         </p>
         {reminder ? (
-          <p className={`text-[11px] font-medium ${reminder.cls}`} data-testid={`bill-due-${bill.id}`}>
+          <p className={`text-[11px] font-medium flex items-center justify-end gap-1 ${reminder.cls}`} data-testid={`bill-due-${bill.id}`}>
+            {reminder.icon && <AlertTriangle className={`size-3 shrink-0 ${reminder.cls}`} />}
             {reminder.text}
           </p>
         ) : (
           <p className="text-[11px] text-slate-400" data-testid={`bill-due-${bill.id}`}>
-            jt. tempo tgl {bill.due_day}
+            tgl {bill.due_day}
           </p>
         )}
       </div>
