@@ -69,16 +69,16 @@ export default function BillRow({ bill }: { bill: Bill }) {
 
   return (
     <div
-      className="group flex items-center gap-3 rounded-2xl px-3 py-3 transition-colors duration-200 hover:bg-slate-50"
+      className="group flex items-center gap-2 rounded-2xl px-2.5 py-2.5 transition-colors duration-200 hover:bg-slate-50"
       data-testid={`bill-row-${bill.id}`}
     >
-      <div className={`grid size-11 shrink-0 place-items-center rounded-2xl ${tint}`}>
-        <Icon className={`size-5 ${fg}`} />
+      <div className={`grid size-10 shrink-0 place-items-center rounded-xl ${tint}`}>
+        <Icon className={`size-4 ${fg}`} />
       </div>
 
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          <p className="truncate font-semibold text-slate-800" data-testid={`bill-title-${bill.id}`}>
+      <div className="min-w-0 flex-1 pr-1">
+        <div className="flex items-center gap-1">
+          <p className="font-semibold text-slate-800 text-sm leading-tight" data-testid={`bill-title-${bill.id}`}>
             {bill.title}
           </p>
           {reminder?.urgent && (
@@ -88,30 +88,30 @@ export default function BillRow({ bill }: { bill: Bill }) {
             />
           )}
         </div>
-        <p className="truncate text-xs text-slate-400">
+        <p className="truncate text-[11px] text-slate-400">
           {bill.is_ppob ? `${label} · ${bill.customer_no}` : bill.subtitle || "Manual"}
         </p>
       </div>
 
-      <div className="shrink-0 text-right">
+      <div className="shrink-0 text-right pr-1">
         <p
-          className={`font-semibold tabular-nums ${paid ? "text-emerald-500" : "text-slate-800"}`}
+          className={`font-semibold tabular-nums text-xs md:text-sm ${paid ? "text-emerald-500" : "text-slate-800"}`}
           data-testid={`bill-amount-${bill.id}`}
         >
           {rupiah(bill.amount)}
         </p>
         {reminder ? (
-          <p className={`text-xs font-medium ${reminder.cls}`} data-testid={`bill-due-${bill.id}`}>
+          <p className={`text-[11px] font-medium ${reminder.cls}`} data-testid={`bill-due-${bill.id}`}>
             {reminder.text}
           </p>
         ) : (
-          <p className="text-xs text-slate-400" data-testid={`bill-due-${bill.id}`}>
-            jatuh tempo tgl {bill.due_day}
+          <p className="text-[11px] text-slate-400" data-testid={`bill-due-${bill.id}`}>
+            jt. tempo tgl {bill.due_day}
           </p>
         )}
       </div>
 
-      <div className="flex shrink-0 items-center gap-1">
+      <div className="flex shrink-0 items-center gap-0.5">
         {bill.is_ppob && !paid && (
           <Button
             size="icon-sm"
