@@ -69,7 +69,7 @@ export default function BillRow({ bill }: { bill: Bill }) {
 
   return (
     <div
-      className="group flex items-center gap-2 rounded-2xl px-2.5 py-2.5 transition-colors duration-200 hover:bg-slate-50"
+      className="group flex items-center gap-2.5 rounded-2xl px-3 py-2.5 transition-colors duration-200 hover:bg-slate-50"
       data-testid={`bill-row-${bill.id}`}
     >
       <div className={`grid size-10 shrink-0 place-items-center rounded-xl ${tint}`}>
@@ -89,11 +89,11 @@ export default function BillRow({ bill }: { bill: Bill }) {
           )}
         </div>
         <p className="truncate text-[11px] text-slate-400">
-          {bill.is_ppob ? `${label} · ${bill.customer_no}` : bill.subtitle || "Manual"}
+          {bill.is_ppob ? bill.customer_no : bill.subtitle || "Manual"}
         </p>
       </div>
 
-      <div className="shrink-0 text-right pr-1">
+      <div className="shrink-0 text-right pr-2">
         <p
           className={`font-semibold tabular-nums text-xs md:text-sm ${paid ? "text-emerald-500" : "text-slate-800"}`}
           data-testid={`bill-amount-${bill.id}`}
