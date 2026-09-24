@@ -15,5 +15,26 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      function sendHeightToParent() {
+        const height = Math.max(
+          document.body.scrollHeight,
+          document.documentElement.scrollHeight,
+          document.body.offsetHeight,
+          document.documentElement.offsetHeight
+        );
+        window.parent.postMessage({ height: height }, '*');
+      }
+
+      window.addEventListener('load', sendHeightToParent);
+      window.addEventListener('resize', sendHeightToParent);
+
+      if (window.ResizeObserver) {
+        new ResizeObserver(sendHeightToParent).observe(document.body);
+      }
+
+      setTimeout(sendHeightToParent, 500);
+      setTimeout(sendHeightToParent, 1500);
+    </script>
   </body>
 </html>
