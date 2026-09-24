@@ -55,7 +55,7 @@ export default function Home() {
             <div>
               <h1 className="font-heading text-3xl font-bold tracking-tight text-slate-900">Tagihan Rutin</h1>
               <p className="mt-1 max-w-[16rem] text-sm text-slate-400">
-                Cek dan bayar listrik, wifi, PDAM & BPJS lewat Digiflazz.
+                Beli Token, Cek dan Bayar Tagihan<br />Digiflazz
               </p>
             </div>
             <AddBillDialog />
