@@ -139,7 +139,7 @@ export default function BillRow({ bill }: { bill: Bill }) {
         <Button
           size="icon-sm"
           variant="ghost"
-          className="text-slate-200 opacity-0 transition-opacity duration-200 hover:text-rose-500 group-hover:opacity-100"
+          className="text-slate-400 hover:text-rose-500 transition-colors duration-200"
           onClick={() => remove.mutate()}
           data-testid={`bill-delete-${bill.id}`}
           aria-label="Hapus tagihan"
