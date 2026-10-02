@@ -68,11 +68,21 @@ async def _bill(doc: dict[str, Any]) -> Bill:
 
     if status == "PAID" and not paid_month:
         lc = doc.get("last_checked_at")
-        if isinstance(lc, datetime):
+        if isinstance(lc, str) and lc:
+            try:
+                paid_month = datetime.fromisoformat(lc).strftime("%Y-%m")
+            except Exception:
+                pass
+        elif isinstance(lc, datetime):
             paid_month = lc.strftime("%Y-%m")
         else:
             ca = doc.get("created_at")
-            if isinstance(ca, datetime):
+            if isinstance(ca, str) and ca:
+                try:
+                    paid_month = datetime.fromisoformat(ca).strftime("%Y-%m")
+                except Exception:
+                    pass
+            elif isinstance(ca, datetime):
                 paid_month = ca.strftime("%Y-%m")
 
     if status == "PAID" and paid_month and paid_month != curr_month:
@@ -182,7 +192,7 @@ async def check_bill(bill_id: str) -> InquiryResult:
 
     changes: dict[str, Any] = {
         "last_message": message,
-        "last_checked_at": datetime.now(ZoneInfo(os.environ.get("APP_TZ", "Asia/Jakarta"))),
+        "last_checked_at": datetime.now(ZoneInfo(os.environ.get("APP_TZ", "Asia/Jakarta"))).isoformat(),
     }
     if ok:
         changes.update(
