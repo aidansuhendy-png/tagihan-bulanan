@@ -9,9 +9,9 @@ from zoneinfo import ZoneInfo
 from pydantic import BaseModel, Field
 
 
-def _now() -> str:
+def _now() -> datetime:
     zone = os.environ.get("APP_TZ", "Asia/Jakarta")
-    return datetime.now(ZoneInfo(zone)).isoformat()
+    return datetime.now(ZoneInfo(zone)).replace(tzinfo=None)
 
 
 def _uid() -> str:
@@ -55,9 +55,9 @@ class Bill(BillBase):
     paid_month: str = ""
     last_ref_id: str = ""
     last_message: str = ""
-    last_checked_at: Optional[str] = None
+    last_checked_at: Optional[datetime] = None
     days_until_due: int = 0
-    created_at: str = Field(default_factory=_now)
+    created_at: datetime = Field(default_factory=_now)
 
 
 class InquiryResult(BaseModel):
@@ -92,7 +92,7 @@ class Transaction(BaseModel):
     sn: str = ""
     amount: float = 0
     ref_id: str = ""
-    created_at: str = Field(default_factory=_now)
+    created_at: datetime = Field(default_factory=_now)
 
 
 class PlnProduct(BaseModel):

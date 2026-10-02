@@ -192,7 +192,7 @@ async def check_bill(bill_id: str) -> InquiryResult:
 
     changes: dict[str, Any] = {
         "last_message": message,
-        "last_checked_at": datetime.now(ZoneInfo(os.environ.get("APP_TZ", "Asia/Jakarta"))).isoformat(),
+        "last_checked_at": datetime.now(ZoneInfo(os.environ.get("APP_TZ", "Asia/Jakarta"))).replace(tzinfo=None),
     }
     if ok:
         changes.update(
