@@ -40,6 +40,7 @@ class BillUpdate(BaseModel):
     due_day: Optional[int] = None
     amount: Optional[float] = None
     status: Optional[BillStatus] = None
+    paid_month: Optional[str] = None
 
 
 class Bill(BillBase):
@@ -48,6 +49,7 @@ class Bill(BillBase):
     admin: float = 0
     customer_name: str = ""
     status: BillStatus = "UNPAID"
+    paid_month: str = ""
     last_ref_id: str = ""
     last_message: str = ""
     last_checked_at: Optional[datetime] = None

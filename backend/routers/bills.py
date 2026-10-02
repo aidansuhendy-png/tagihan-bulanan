@@ -1,10 +1,12 @@
 """Saved bills + Digiflazz pascabayar inquiry/payment. All routes mount under /api."""
 
 import logging
+import os
 import time
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Optional
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, HTTPException
 from pymongo import DESCENDING
@@ -54,7 +56,36 @@ PLN_FALLBACK: list[PlnProduct] = [
 ]
 
 
-def _bill(doc: dict[str, Any]) -> Bill:
+def _current_month() -> str:
+    zone = os.environ.get("APP_TZ", "Asia/Jakarta")
+    return datetime.now(ZoneInfo(zone)).strftime("%Y-%m")
+
+
+async def _bill(doc: dict[str, Any]) -> Bill:
+    curr_month = _current_month()
+    status = doc.get("status", "UNPAID")
+    paid_month = doc.get("paid_month") or ""
+
+    if status == "PAID" and not paid_month:
+        lc = doc.get("last_checked_at")
+        if isinstance(lc, datetime):
+            paid_month = lc.strftime("%Y-%m")
+        else:
+            ca = doc.get("created_at")
+            if isinstance(ca, datetime):
+                paid_month = ca.strftime("%Y-%m")
+
+    if status == "PAID" and paid_month and paid_month != curr_month:
+        updates = {
+            "status": "UNPAID",
+            "amount": 0.0,
+            "paid_month": "",
+            "last_ref_id": "",
+            "last_message": "Tagihan bulan baru (menunggu sinkronisasi)",
+        }
+        await db.bills.update_one({"id": doc["id"]}, {"$set": updates})
+        doc.update(updates)
+
     bill = Bill(**{k: v for k, v in doc.items() if k != "_id"})
     bill.days_until_due = days_until_due(bill.due_day)
     return bill
@@ -91,7 +122,7 @@ async def products() -> list[Product]:
 @router.get("/bills", response_model=list[Bill])
 async def list_bills() -> list[Bill]:
     docs = await db.bills.find().to_list(500)
-    bills = [_bill(d) for d in docs]
+    bills = [await _bill(d) for d in docs]
     # Paling mendesak di atas: belum lunas dulu, urut dari yang paling lewat jatuh tempo
     # (days_until_due terkecil), lalu tagihan lunas selalu di bawah.
     bills.sort(key=lambda b: (b.status == "PAID", b.days_until_due, b.title))
@@ -107,7 +138,7 @@ async def create_bill(payload: BillCreate) -> Bill:
 
 @router.get("/bills/{bill_id}", response_model=Bill)
 async def get_bill(bill_id: str) -> Bill:
-    return _bill(await _get_doc(bill_id))
+    return await _bill(await _get_doc(bill_id))
 
 
 @router.patch("/bills/{bill_id}", response_model=Bill)
@@ -116,7 +147,7 @@ async def update_bill(bill_id: str, payload: BillUpdate) -> Bill:
     changes = {k: v for k, v in payload.model_dump().items() if v is not None}
     if changes:
         await db.bills.update_one({"id": bill_id}, {"$set": changes})
-    return _bill(await _get_doc(bill_id))
+    return await _bill(await _get_doc(bill_id))
 
 
 @router.delete("/bills/{bill_id}")
@@ -129,7 +160,7 @@ async def delete_bill(bill_id: str) -> dict[str, bool]:
 @router.post("/bills/{bill_id}/check", response_model=InquiryResult)
 async def check_bill(bill_id: str) -> InquiryResult:
     doc = await _get_doc(bill_id)
-    bill = _bill(doc)
+    bill = await _bill(doc)
     if not bill.is_ppob:
         raise HTTPException(status_code=400, detail="Tagihan manual tidak bisa dicek otomatis")
     if not bill.customer_no or not bill.buyer_sku_code:
@@ -161,11 +192,12 @@ async def check_bill(bill_id: str) -> InquiryResult:
                 "customer_name": str(data.get("customer_name") or ""),
                 "last_ref_id": ref_id,
                 "status": "UNPAID",
+                "paid_month": "",
             }
         )
     elif already_paid:
         # rc 60: tidak ada tagihan karena sudah dibayar bulan ini — tandai lunas.
-        changes.update({"amount": 0, "status": "PAID"})
+        changes.update({"amount": 0, "status": "PAID", "paid_month": _current_month()})
     await db.bills.update_one({"id": bill_id}, {"$set": changes})
 
     await _log_tx(
@@ -189,21 +221,21 @@ async def check_bill(bill_id: str) -> InquiryResult:
         amount=amount,
         admin=admin,
         ref_id=ref_id,
-        bill=_bill(await _get_doc(bill_id)),
+        bill=await _bill(await _get_doc(bill_id)),
     )
 
 
 @router.post("/bills/{bill_id}/pay", response_model=PaymentResult)
 async def pay_bill(bill_id: str) -> PaymentResult:
     doc = await _get_doc(bill_id)
-    bill = _bill(doc)
+    bill = await _bill(doc)
     if not bill.is_ppob:
         # Manual bill: just mark it paid.
-        await db.bills.update_one({"id": bill_id}, {"$set": {"status": "PAID"}})
+        await db.bills.update_one({"id": bill_id}, {"$set": {"status": "PAID", "paid_month": _current_month()}})
         await _log_tx(bill_id=bill_id, title=bill.title, kind="payment", rc="00",
                       status="Sukses", message="Ditandai lunas (manual)", amount=bill.amount)
         return PaymentResult(ok=True, rc="00", message="Ditandai lunas",
-                             bill=_bill(await _get_doc(bill_id)))
+                             bill=await _bill(await _get_doc(bill_id)))
 
     if bill.status == "PAID":
         raise HTTPException(status_code=400, detail="Tagihan ini sudah lunas")
@@ -222,8 +254,14 @@ async def pay_bill(bill_id: str) -> PaymentResult:
     ok = rc == "00"
     status = "PAID" if ok else ("PENDING" if rc in {"01", "03"} else "UNPAID")
 
+    update_data = {"status": status, "last_message": message}
+    if status == "PAID":
+        update_data["paid_month"] = _current_month()
+    else:
+        update_data["paid_month"] = ""
+
     await db.bills.update_one(
-        {"id": bill_id}, {"$set": {"status": status, "last_message": message}}
+        {"id": bill_id}, {"$set": update_data}
     )
     await _log_tx(
         bill_id=bill_id,
@@ -239,7 +277,7 @@ async def pay_bill(bill_id: str) -> PaymentResult:
         ref_id=bill.last_ref_id,
     )
     return PaymentResult(ok=ok, rc=rc, message=message, sn=sn,
-                         bill=_bill(await _get_doc(bill_id)))
+                         bill=await _bill(await _get_doc(bill_id)))
 
 
 @router.get("/transactions", response_model=list[Transaction])
@@ -251,7 +289,7 @@ async def list_transactions(limit: int = 100) -> list[Transaction]:
 @router.get("/summary", response_model=Summary)
 async def summary() -> Summary:
     docs = await db.bills.find().to_list(500)
-    bills = [_bill(d) for d in docs]
+    bills = [await _bill(d) for d in docs]
     unpaid = [b for b in bills if b.status != "PAID"]
     return Summary(
         total_amount=sum(b.amount for b in unpaid),

@@ -13,6 +13,7 @@ export interface Bill {
   admin: number;
   customer_name: string;
   status: BillStatus;
+  paid_month?: string;
   last_ref_id: string;
   last_message: string;
   last_checked_at: string | null;
