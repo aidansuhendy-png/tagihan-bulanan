@@ -1,14 +1,17 @@
 """Pydantic models for saved bills and PPOB transactions. Mirrored in frontend/src/lib/types.ts."""
 
+import os
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Literal, Optional
+from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, Field
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    zone = os.environ.get("APP_TZ", "Asia/Jakarta")
+    return datetime.now(ZoneInfo(zone))
 
 
 def _uid() -> str:

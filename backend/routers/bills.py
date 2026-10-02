@@ -182,7 +182,7 @@ async def check_bill(bill_id: str) -> InquiryResult:
 
     changes: dict[str, Any] = {
         "last_message": message,
-        "last_checked_at": datetime.now(timezone.utc),
+        "last_checked_at": datetime.now(ZoneInfo(os.environ.get("APP_TZ", "Asia/Jakarta"))),
     }
     if ok:
         changes.update(
@@ -296,7 +296,7 @@ async def summary() -> Summary:
         unpaid_count=len(unpaid),
         paid_count=len(bills) - len(unpaid),
         bill_count=len(bills),
-        month=datetime.now(timezone.utc).strftime("%Y-%m"),
+        month=_current_month(),
     )
 
 

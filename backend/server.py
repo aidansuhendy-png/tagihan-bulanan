@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from typing import List
 import uuid
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import traceback
 
 ROOT_DIR = Path(__file__).parent
@@ -44,7 +45,7 @@ api_router = APIRouter(prefix="/api")
 class StatusCheck(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     client_name: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(ZoneInfo(os.environ.get("APP_TZ", "Asia/Jakarta"))))
 
 class StatusCheckCreate(BaseModel):
     client_name: str
