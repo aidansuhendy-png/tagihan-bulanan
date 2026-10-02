@@ -8,7 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 const fmt = (iso: string): string =>
-  new Date(iso).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" });
+  new Date(iso).toLocaleString("id-ID", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Asia/Jakarta",
+  });
 
 export default function History() {
   const tx = useQuery({
